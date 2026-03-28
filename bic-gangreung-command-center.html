@@ -6,6 +6,7 @@
 <title>BIC · 강릉 강문동 177-1 숙박시설 신축공사</title>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyDzsosUTSuub0rM6WWiSU3QLZH9SY58APU",
@@ -17,6 +18,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const storage = firebase.storage();
 </script>
 <style>
 :root{
@@ -300,6 +302,85 @@ textarea:focus{outline:none;border-color:var(--gm)}
 
 .mf-input{width:100%;border:1px solid var(--bdc);border-radius:6px;padding:6px 9px;font-size:12px;background:var(--bg2);margin-top:6px;font-family:'KoPub돋움체 Bold','KoPubDotum Bold','Malgun Gothic',sans-serif!important}
 .mf-input:focus{outline:none;border-color:var(--gm)}
+/* ── 사진 업로드 ── */
+.photo-upload-zone {
+  border: 2px dashed var(--bdc); border-radius: 10px;
+  padding: 18px 12px; text-align: center; cursor: pointer;
+  background: var(--bg2); margin-bottom: 12px; transition: all 0.2s;
+}
+.photo-upload-zone:hover, .photo-upload-zone.dragover {
+  border-color: var(--gr); background: var(--gd); color: var(--gr);
+}
+.photo-upload-zone input[type=file] { display: none; }
+.photo-upload-zone .uz-icon { font-size: 28px; margin-bottom: 6px; }
+.photo-upload-zone .uz-txt { font-size: 12px; color: var(--mu); }
+.photo-upload-zone .uz-btn {
+  display: inline-block; margin-top: 8px; background: var(--gr); color: #fff;
+  border-radius: 6px; padding: 6px 16px; font-size: 12px; font-weight: 700;
+  cursor: pointer;
+}
+.upload-progress {
+  background: var(--bg3); border-radius: 8px; padding: 10px 12px;
+  margin-bottom: 10px; font-size: 12px; color: var(--gr); display: none;
+}
+.upload-progress .up-bar-wrap {
+  background: var(--bdc); border-radius: 4px; height: 6px; margin-top: 6px;
+}
+.upload-progress .up-bar { background: var(--gr); height: 6px; border-radius: 4px; width: 0; transition: width 0.3s; }
+
+/* 사진 갤러리 그리드 */
+.photo-gallery {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 14px;
+}
+.photo-item {
+  aspect-ratio: 1; border-radius: 8px; overflow: hidden;
+  border: 1px solid var(--bdc); position: relative; cursor: pointer;
+  box-shadow: var(--sh);
+}
+.photo-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo-item .photo-del {
+  position: absolute; top: 3px; right: 3px; background: rgba(200,0,30,.85);
+  color: #fff; border: none; border-radius: 50%; width: 18px; height: 18px;
+  font-size: 10px; cursor: pointer; display: none; align-items: center; justify-content: center;
+}
+body.admin-mode .photo-item:hover .photo-del { display: flex; }
+.photo-item .photo-caption {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(0,0,0,0.55); color: #fff; font-size: 9px;
+  padding: 3px 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* 매뉴얼 탭 */
+.manual-section { margin-bottom: 20px; }
+.manual-section h3 {
+  font-size: 13px; font-weight: 700; color: var(--gr);
+  border-left: 3px solid var(--gr); padding-left: 10px;
+  margin-bottom: 10px; line-height: 1.4;
+}
+.manual-step {
+  background: var(--bg2); border: 1px solid var(--bdc); border-radius: 8px;
+  padding: 10px 13px; margin-bottom: 7px; font-size: 12px; line-height: 1.8;
+}
+.manual-step .step-num {
+  display: inline-block; background: var(--gr); color: #fff;
+  border-radius: 50%; width: 18px; height: 18px; font-size: 10px; font-weight: 700;
+  text-align: center; line-height: 18px; margin-right: 6px; flex-shrink: 0;
+}
+.manual-tip {
+  background: var(--od); border: 1px solid #f5c4a0; border-radius: 7px;
+  padding: 9px 12px; font-size: 11px; color: var(--ye); margin-top: 6px; line-height: 1.7;
+}
+.manual-warn {
+  background: #fef2f2; border: 1px solid #fca5a5; border-radius: 7px;
+  padding: 9px 12px; font-size: 11px; color: #991b1b; margin-top: 6px; line-height: 1.7;
+}
+.drive-perm-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 8px; }
+.drive-perm-table th {
+  background: var(--gr); color: #fff; padding: 7px 10px; text-align: left;
+}
+.drive-perm-table td { padding: 7px 10px; border-bottom: 1px solid var(--bdc); }
+.drive-perm-table tr:nth-child(even) td { background: var(--bg3); }
+
 
 /* ── 관리자 잠금 ── */
 .admin-only { display: none !important; }
@@ -392,6 +473,7 @@ body.admin-mode #admin-bar { display: flex; align-items: center; justify-content
   <div class="tb"     data-tab="minutes">📝 회의록</div>
   <div class="tb"     data-tab="sijong">🏗 시공</div>
   <div class="tb"     data-tab="contract">📄 계약</div>
+<div class="tb admin-only" data-tab="manual" style="color:#B45309">📖 매뉴얼</div>
 </div>
 <div class="ticker-wrap">
   <div class="ticker" id="ticker">
@@ -1164,6 +1246,88 @@ body.admin-mode #admin-bar { display: flex; align-items: center; justify-content
   </div>
 </div></div></div></div>
 
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- 📖 매뉴얼 페이지 (관리자 전용) -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="pg-manual" class="pg admin-only">
+<div class="sh" style="margin-top:4px"><h2>📖 사용 매뉴얼</h2><span class="bx bo">관리자 전용</span></div>
+
+<!-- ① 사진 업로드 방법 (관리자) -->
+<div class="manual-section">
+  <h3>① 사진 업로드 방법 — 관리자</h3>
+  <div class="manual-step"><span class="step-num">1</span>우측 하단 🔑 버튼 → 비밀번호 입력 → 관리자 모드 활성화</div>
+  <div class="manual-step"><span class="step-num">2</span>원하는 탭(현장·시공·계약 등)으로 이동 → 메모 입력 영역에서 <b>📸 사진</b> 탭 클릭</div>
+  <div class="manual-step"><span class="step-num">3</span>📷 사진 선택 버튼 클릭 → 스마트폰 카메라 또는 갤러리에서 사진 선택</div>
+  <div class="manual-step"><span class="step-num">4</span>설명 입력(선택) → <b>등록</b> 버튼 클릭 → Firebase Storage에 자동 업로드</div>
+  <div class="manual-step"><span class="step-num">5</span>업로드 완료 즉시 열람자 화면에도 사진 표시됨 (새로고침 불필요)</div>
+  <div class="manual-tip">💡 사진은 Firebase Storage에 영구 저장되므로 새로고침·재접속 후에도 유지됩니다.<br>📱 모바일에서 촬영 즉시 업로드 가능 · PC에서는 파일 선택으로 업로드</div>
+  <div class="manual-warn">⚠️ 무료 한도: Storage 5GB / Firestore 읽기 5만회/일 — 현장 사진 수백 장 수준은 무료 범위 내</div>
+</div>
+
+<!-- ② 구글 드라이브 링크 등록 방법 -->
+<div class="manual-section">
+  <h3>② 구글 드라이브 링크 등록 방법</h3>
+  <div class="manual-step"><span class="step-num">1</span>구글 드라이브에서 공유할 파일 또는 폴더를 오른쪽 클릭 → <b>공유</b></div>
+  <div class="manual-step"><span class="step-num">2</span>"링크가 있는 모든 사용자" 선택 → 권한: <b>뷰어(열람만)</b> 선택 → <b>링크 복사</b></div>
+  <div class="manual-step"><span class="step-num">3</span>관리자 모드에서 해당 항목의 링크 입력란에 붙여넣기 → <b>🔗 등록</b> 클릭</div>
+  <div class="manual-step"><span class="step-num">4</span>등록된 링크는 Firestore에 저장 → 열람자도 📂 열기 버튼으로 바로 접근 가능</div>
+  <div class="manual-tip">💡 CAD 파일, 동영상, 대용량 문서는 드라이브 링크가 가장 효율적입니다.<br>폴더 단위로 링크를 등록하면 그 안의 파일들을 한 번에 공유할 수 있습니다.</div>
+</div>
+
+<!-- ③ 구글 드라이브 권한 설정 -->
+<div class="manual-section">
+  <h3>③ 구글 드라이브 권한 설정 가이드</h3>
+  <table class="drive-perm-table">
+    <tr><th>권한 유형</th><th>구글 계정</th><th>할 수 있는 것</th><th>권장 대상</th></tr>
+    <tr><td>🔓 링크 있는 모든 사용자 — 뷰어</td><td>불필요</td><td>열람만</td><td>일반 직원 공유</td></tr>
+    <tr><td>💬 링크 있는 모든 사용자 — 댓글</td><td>필요</td><td>열람 + 댓글</td><td>검토 요청 시</td></tr>
+    <tr><td>✏️ 링크 있는 모든 사용자 — 편집자</td><td>필요</td><td>열람·수정·삭제</td><td>협업 문서 한정</td></tr>
+    <tr><td>🔒 특정 사람만</td><td>필요</td><td>지정된 계정만</td><td>계약서 등 민감 문서</td></tr>
+  </table>
+  <div class="manual-tip">
+    💡 <b>기본 원칙:</b> 현장 사진·도면·일반 문서 → "링크 있는 모든 사용자 — 뷰어" (계정 불필요)<br>
+    계약서·견적서 등 민감 문서 → "특정 사람만" (계정 이메일 직접 지정)
+  </div>
+  <div class="manual-warn">
+    ⚠️ "편집자" 권한은 최소한으로 줄 것 — 실수로 파일 삭제·수정될 수 있음<br>
+    ⚠️ 계약서·개인정보 포함 문서는 반드시 "특정 사람만"으로 제한
+  </div>
+</div>
+
+<!-- ④ 열람자 화면 사용법 -->
+<div class="manual-section">
+  <h3>④ 열람자 화면 사용법 안내 (직원 공유용)</h3>
+  <div style="background:var(--gd);border:1px solid #90C8A0;border-radius:10px;padding:14px 16px;font-size:12px;line-height:2;margin-bottom:10px">
+    <b>📋 BIC 강릉 커맨드센터 사용법</b><br>
+    ① 상단 탭을 눌러 원하는 정보로 이동하세요<br>
+    &nbsp;&nbsp;&nbsp;· <b>개요</b> — 공사 기본 정보<br>
+    &nbsp;&nbsp;&nbsp;· <b>현장</b> — 현장 위치·사진·일지<br>
+    &nbsp;&nbsp;&nbsp;· <b>도면</b> — 도면 파일 링크<br>
+    &nbsp;&nbsp;&nbsp;· <b>시공</b> — 공정별 진행 상황<br>
+    &nbsp;&nbsp;&nbsp;· <b>계약</b> — 계약 단계별 서류<br>
+    ② 사진은 탭하면 크게 볼 수 있습니다<br>
+    ③ 📂 열기 버튼은 구글 드라이브 파일을 바로 엽니다 (구글 계정 없어도 열람 가능)<br>
+    ④ 화면은 관리자가 업데이트하면 자동으로 반영됩니다 (새로고침 불필요)
+  </div>
+  <button class="btn btn-sm" onclick="copyManualText()" style="margin-bottom:6px">📋 직원 공유용 문구 복사</button>
+  <div id="manual-copy-ok" style="font-size:11px;color:var(--gr);display:none">✅ 복사되었습니다! 카카오톡이나 문자로 붙여넣기 하세요.</div>
+</div>
+
+<!-- 전체 현황 -->
+<div class="manual-section">
+  <h3>⑤ 현재 저장 현황</h3>
+  <div class="kpi2">
+    <div class="kc a"><div class="kl">저장된 메모·일지</div><div class="kv" id="stat-entries">-</div><div class="ks">Firestore</div></div>
+    <div class="kc a"><div class="kl">저장된 링크</div><div class="kv" id="stat-links">-</div><div class="ks">Firestore</div></div>
+  </div>
+  <div class="kpi2">
+    <div class="kc a"><div class="kl">업로드된 사진</div><div class="kv" id="stat-photos">-</div><div class="ks">Firebase Storage</div></div>
+    <div class="kc a"><div class="kl">Firebase 요금제</div><div class="kv" style="color:var(--gr)">Blaze</div><div class="ks">사용한 만큼만</div></div>
+  </div>
+</div>
+
+</div>
 <div id="lb" class="lb">
   <button class="lb-close">×</button>
   <button class="lb-nav lb-prev">‹</button>
@@ -1777,6 +1941,184 @@ saveDocLink = function(btn) {
 };
 
 
+
+// ═══════════════════════════════════════════════════════════════
+// 📸 Firebase Storage 사진 업로드 (단순화)
+// ═══════════════════════════════════════════════════════════════
+(function() {
+
+  // 📸 사진 탭 클릭 시 Firebase 업로드 영역 교체
+  function buildPhotoUploader(form) {
+    var photoPanel = form.querySelector('.aep[data-mp="photo"]');
+    if (!photoPanel || photoPanel.getAttribute('data-fs-ready')) return;
+    photoPanel.setAttribute('data-fs-ready', '1');
+
+    var ll_id = form.getAttribute('data-ll') || '';
+    var sc = form.closest('.sc');
+    var scId = sc ? (sc.getAttribute('data-s') || '') : '';
+    var key = ll_id || scId || 'general';
+
+    // 갤러리 영역
+    var galleryId = 'fsgallery_' + key.replace(/[^a-z0-9]/gi,'_');
+    var gallery = document.createElement('div');
+    gallery.id = galleryId;
+    gallery.className = 'photo-gallery';
+
+    // 업로드 버튼 영역
+    var uploadWrap = document.createElement('div');
+    uploadWrap.innerHTML =
+      '<label style="display:block;border:2px dashed var(--bdc);border-radius:8px;padding:14px;text-align:center;cursor:pointer;background:var(--bg2);margin-bottom:8px">'
+      + '<input type="file" accept="image/*" multiple style="display:none" id="fsfile_'+key.replace(/[^a-z0-9]/gi,'_')+'">'
+      + '<div style="font-size:22px;margin-bottom:4px">📷</div>'
+      + '<div style="font-size:12px;color:var(--mu)">사진 선택 (여러 장 가능)</div>'
+      + '<div style="font-size:11px;color:var(--gl);margin-top:4px;font-weight:700">선택 즉시 자동 업로드</div>'
+      + '</label>'
+      + '<div id="fsprogress_'+key.replace(/[^a-z0-9]/gi,'_')+'" style="display:none;background:var(--bg3);border-radius:6px;padding:8px 12px;margin-bottom:8px;font-size:12px;color:var(--gr)">'
+      + '업로드 중... <div style="background:var(--bdc);border-radius:3px;height:5px;margin-top:5px"><div id="fsbar_'+key.replace(/[^a-z0-9]/gi,'_')+'" style="background:var(--gr);height:5px;border-radius:3px;width:0;transition:width 0.3s"></div></div>'
+      + '</div>';
+
+    // 기존 내용 비우고 새로 삽입
+    photoPanel.innerHTML = '';
+    photoPanel.appendChild(gallery);
+    photoPanel.appendChild(uploadWrap);
+
+    // 파일 선택 이벤트
+    var fileInput = uploadWrap.querySelector('input[type=file]');
+    fileInput.addEventListener('change', function() {
+      if (!this.files.length) return;
+      uploadFiles(Array.from(this.files), key, galleryId);
+      this.value = '';
+    });
+
+    // 기존 사진 로드
+    loadPhotos(key, galleryId);
+  }
+
+  // 업로드
+  function uploadFiles(files, key, galleryId) {
+    var safeKey = key.replace(/[^a-z0-9]/gi,'_');
+    var progressEl = document.getElementById('fsprogress_'+safeKey);
+    var barEl = document.getElementById('fsbar_'+safeKey);
+    if (progressEl) progressEl.style.display = 'block';
+
+    var total = files.length;
+    var done = 0;
+
+    files.forEach(function(file) {
+      var fileName = Date.now() + '_' + Math.random().toString(36).slice(2) + '_' + file.name.replace(/[^\w.-]/g,'_');
+      var path = 'photos/' + key + '/' + fileName;
+      var ref = storage.ref(path);
+      var task = ref.put(file);
+
+      task.on('state_changed',
+        function(snap) {
+          if (barEl) barEl.style.width = Math.round(snap.bytesTransferred/snap.totalBytes*100)+'%';
+        },
+        function(err) {
+          console.error('업로드 오류:', err);
+          if (progressEl) progressEl.style.display = 'none';
+        },
+        function() {
+          task.snapshot.ref.getDownloadURL().then(function(url) {
+            db.collection('photos').add({
+              url: url, path: path, key: key,
+              name: file.name,
+              createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            done++;
+            if (done >= total && progressEl) {
+              setTimeout(function(){ progressEl.style.display='none'; if(barEl) barEl.style.width='0'; }, 800);
+            }
+          });
+        }
+      );
+    });
+  }
+
+  // 사진 실시간 로드
+  var loadedKeys = {};
+  function loadPhotos(key, galleryId) {
+    if (loadedKeys[key]) return;
+    loadedKeys[key] = true;
+
+    db.collection('photos').where('key','==',key).orderBy('createdAt','asc')
+      .onSnapshot(function(snap) {
+        var gallery = document.getElementById(galleryId);
+        if (!gallery) return;
+        gallery.innerHTML = '';
+        snap.forEach(function(doc) {
+          var d = doc.data();
+          if (!d.url) return;
+          var item = document.createElement('div');
+          item.className = 'photo-item';
+          item.innerHTML =
+            '<img src="'+d.url+'" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block">'
+            + '<button class="photo-del admin-only" onclick="deletePhoto(this,''+doc.id+'',''+d.path+'')" title="삭제">×</button>';
+          item.querySelector('img').addEventListener('click', function(){ openLbS(d.url, d.name||'현장 사진'); });
+          gallery.appendChild(item);
+        });
+      }, function(e){ console.warn('사진 로드 오류:', e.message); });
+  }
+
+  // 사진 삭제 (전역)
+  window.deletePhoto = function(btn, docId, path) {
+    if (!confirm('사진을 삭제하시겠습니까?')) return;
+    if (docId) db.collection('photos').doc(docId).delete();
+    if (path) storage.ref(path).delete().catch(function(){});
+  };
+
+  // 📸 탭 클릭 감지 → 업로더 빌드
+  document.addEventListener('click', function(e) {
+    var mtt = e.target.closest('.mtt');
+    if (mtt && mtt.getAttribute('data-mp') === 'photo') {
+      var form = mtt.closest('.memo-form');
+      if (form) setTimeout(function(){ buildPhotoUploader(form); }, 50);
+    }
+  });
+
+  // 관리자 모드 진입 시 이미 열려있는 photo 패널 초기화
+  var _origFabLogin2 = window.fabLogin;
+  window.fabLogin = function() {
+    if (_origFabLogin2) _origFabLogin2();
+    setTimeout(function(){
+      document.querySelectorAll('.aet.on[data-mp="photo"]').forEach(function(btn){
+        var form = btn.closest('.memo-form');
+        if (form) buildPhotoUploader(form);
+      });
+    }, 150);
+  };
+
+  // 통계
+  function updateStats() {
+    db.collection('entries').get().then(function(s){ var el=document.getElementById('stat-entries'); if(el) el.textContent=s.size+'건'; });
+    db.collection('links').get().then(function(s){ var el=document.getElementById('stat-links'); if(el) el.textContent=s.size+'건'; });
+    db.collection('photos').get().then(function(s){ var el=document.getElementById('stat-photos'); if(el) el.textContent=s.size+'장'; });
+  }
+  window.updateStats = updateStats;
+  setTimeout(updateStats, 2000);
+
+})();
+
+// 매뉴얼 복사
+function copyManualText() {
+  var text = 'BIC 강릉 커맨드센터 사용법\n'
+    + '━━━━━━━━━━━━━━━━━━\n'
+    + '🔗 접속 링크:\nhttps://xrysyjw-ship-it.github.io/BIC-Command-Center/bic-gangreung-command-center.html\n\n'
+    + '📋 사용 방법\n'
+    + '① 위 링크 접속 (별도 앱 설치 불필요)\n'
+    + '② 상단 탭으로 원하는 정보 확인\n'
+    + '③ 사진은 탭하면 크게 보입니다\n'
+    + '④ 📂 열기 버튼으로 드라이브 파일 바로 열람\n'
+    + '⑤ 관리자 업데이트 시 자동 반영됩니다\n\n'
+    + '문의: 유정우 이사 010-2711-4722';
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function() {
+      var el=document.getElementById('manual-copy-ok');
+      if(el){el.style.display='block';setTimeout(function(){el.style.display='none';},3000);}
+    });
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════
 // 관리자 플로팅 버튼
 // ═══════════════════════════════════════════════════════════════
@@ -1933,6 +2275,125 @@ window.addEventListener('DOMContentLoaded', function() {
     setTimeout(loadEntries, 500);
   }
 })();
+
+// ── 링크 Firestore 저장/로드 ──────────────────────────────────
+(function() {
+  // rdoc-url, drive-url-input, draw-link-input 각각에 고유 key 부여
+  function getLinkKey(el) {
+    // rdoc → rdoc-num + rdoc-name 조합
+    var rdoc = el.closest('.rdoc');
+    if (rdoc) {
+      var num  = rdoc.querySelector('.rdoc-num');
+      var name = rdoc.querySelector('.rdoc-name');
+      if (num && name) return 'rdoc:' + num.textContent.trim() + ':' + name.textContent.trim();
+    }
+    // sc-drive → sc-drive-lbl 조합
+    var drive = el.closest('.sc-drive');
+    if (drive) {
+      var lbl = drive.querySelector('.sc-drive-lbl');
+      if (lbl) return 'drive:' + lbl.textContent.trim();
+    }
+    // draw-link-row → draw-link-label 조합
+    var row = el.closest('.draw-link-row');
+    if (row) {
+      var label = row.querySelector('.draw-link-label');
+      if (label) return 'draw:' + label.textContent.trim();
+    }
+    return null;
+  }
+
+  // 링크 저장 오버라이드
+  function wrapSave(origFn) {
+    return function(btn) {
+      origFn(btn);
+      // 등록된 URL 찾기
+      var row = btn.closest('.rdoc') || btn.closest('.sc-drive') || btn.closest('.draw-link-row');
+      if (!row) return;
+      var openEl = row.querySelector('.rdoc-open, .drive-open-btn, .draw-link-open');
+      var url = openEl ? openEl.href : '';
+      if (!url || url === '#' || url === location.href + '#') return;
+      var input = row.querySelector('.rdoc-url, .drive-url-input, .draw-link-input');
+      var key = getLinkKey(input || btn);
+      if (!key) return;
+      db.collection('links').doc(encodeURIComponent(key)).set({
+        key: key, url: url,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).catch(function(e){ console.warn('링크 저장 오류:', e); });
+    };
+  }
+
+  // 원본 함수 래핑
+  if (typeof saveDocLink !== 'undefined') saveDocLink = wrapSave(saveDocLink);
+  if (typeof saveSCDrive !== 'undefined') saveSCDrive = wrapSave(saveSCDrive);
+  if (typeof saveDrawLink !== 'undefined') saveDrawLink = wrapSave(saveDrawLink);
+
+  // 페이지 로드 시 링크 복원
+  function restoreLinks() {
+    db.collection('links').get().then(function(snap) {
+      snap.forEach(function(doc) {
+        var d = doc.data();
+        if (!d.key || !d.url) return;
+
+        // rdoc
+        if (d.key.startsWith('rdoc:')) {
+          var parts = d.key.split(':');
+          var num = parts[1]; var name = parts.slice(2).join(':');
+          document.querySelectorAll('.rdoc').forEach(function(rdoc) {
+            var numEl  = rdoc.querySelector('.rdoc-num');
+            var nameEl = rdoc.querySelector('.rdoc-name');
+            if (numEl && nameEl && numEl.textContent.trim() === num && nameEl.textContent.trim() === name) {
+              var openEl = rdoc.querySelector('.rdoc-open');
+              var saveBtn = rdoc.querySelector('.rdoc-save');
+              var inputEl = rdoc.querySelector('.rdoc-url');
+              if (openEl) { openEl.href = d.url; openEl.style.display = 'inline-flex'; }
+              if (saveBtn) saveBtn.style.display = 'none';
+              if (inputEl) inputEl.style.display = 'none';
+            }
+          });
+        }
+
+        // sc-drive
+        if (d.key.startsWith('drive:')) {
+          var lbl = d.key.slice(6);
+          document.querySelectorAll('.sc-drive').forEach(function(drv) {
+            var lblEl = drv.querySelector('.sc-drive-lbl');
+            if (lblEl && lblEl.textContent.trim() === lbl) {
+              var openEl  = drv.querySelector('.drive-open-btn');
+              var saveBtn = drv.querySelector('.drive-save-btn');
+              var inputEl = drv.querySelector('.drive-url-input');
+              if (openEl) { openEl.href = d.url; openEl.style.display = 'inline-flex'; }
+              if (saveBtn) saveBtn.style.display = 'none';
+              if (inputEl) inputEl.style.display = 'none';
+            }
+          });
+        }
+
+        // draw-link
+        if (d.key.startsWith('draw:')) {
+          var drawLbl = d.key.slice(5);
+          document.querySelectorAll('.draw-link-row').forEach(function(row) {
+            var lblEl = row.querySelector('.draw-link-label');
+            if (lblEl && lblEl.textContent.trim() === drawLbl) {
+              var openEl  = row.querySelector('.draw-link-open');
+              var saveBtn = row.querySelector('.draw-link-btn:not(.admin-only)');
+              var inputEl = row.querySelector('.draw-link-input');
+              if (openEl) { openEl.href = d.url; openEl.style.display = 'inline-flex'; }
+              if (saveBtn) { saveBtn.textContent = '✓ 등록됨'; saveBtn.style.background = '#1A4A2A'; saveBtn.style.display = 'none'; }
+              if (inputEl) inputEl.style.display = 'none';
+            }
+          });
+        }
+      });
+    }).catch(function(e){ console.warn('링크 로드 오류:', e); });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', restoreLinks);
+  } else {
+    setTimeout(restoreLinks, 600);
+  }
+})();
+
 
 </script>
 </body>
