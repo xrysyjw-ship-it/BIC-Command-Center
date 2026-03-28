@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIC 관리자 페이지</title>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; min-height: 100vh; }
+
+  /* 로그인 화면 */
+  #login-screen {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; background: #1a3a2a;
+  }
+  .login-box {
+    background: white; border-radius: 16px; padding: 48px 40px;
+    width: 360px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+  .login-box h1 { color: #1a3a2a; font-size: 22px; margin-bottom: 8px; }
+  .login-box p { color: #888; font-size: 13px; margin-bottom: 32px; }
+  .login-box input {
+    width: 100%; padding: 14px 16px; border: 1.5px solid #ddd;
+    border-radius: 8px; font-size: 16px; text-align: center;
+    letter-spacing: 4px; margin-bottom: 16px;
+  }
+  .login-box input:focus { outline: none; border-color: #1a3a2a; }
+  .login-btn {
+    width: 100%; padding: 14px; background: #1a3a2a; color: white;
+    border: none; border-radius: 8px; font-size: 16px; cursor: pointer;
+    font-weight: 600; transition: background 0.2s;
+  }
+  .login-btn:hover { background: #2a5a3a; }
+  .login-error { color: #e53e3e; font-size: 13px; margin-top: 12px; }
+
+  /* 메인 화면 */
+  #main-screen { display: none; }
+  .header {
+    background: #1a3a2a; color: white; padding: 16px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header h1 { font-size: 18px; font-weight: 700; }
+  .header-right { display: flex; gap: 12px; align-items: center; }
+  .view-link { color: #a0d4b0; font-size: 13px; text-decoration: none; }
+  .view-link:hover { color: white; }
+  .logout-btn {
+    background: rgba(255,255,255,0.15); color: white; border: none;
+    padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+
+  .content { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+
+  /* 탭 */
+  .tabs {
+    display: flex; gap: 4px; background: white; border-radius: 12px;
+    padding: 6px; margin-bottom: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .tab {
+    flex: 1; padding: 10px; border: none; background: none;
+    border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500;
+    color: #666; transition: all 0.2s;
+  }
+  .tab.active { background: #1a3a2a; color: white; }
+
+  /* 입력 폼 카드 */
+  .form-card {
+    background: white; border-radius: 12px; padding: 24px;
+    margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .form-card h2 { font-size: 16px; color: #333; margin-bottom: 16px; font-weight: 600; }
+  .form-row { margin-bottom: 12px; }
+  .form-row label { display: block; font-size: 12px; color: #888; margin-bottom: 4px; font-weight: 500; }
+  .form-row input, .form-row textarea, .form-row select {
+    width: 100%; padding: 10px 12px; border: 1.5px solid #e8e8e8;
+    border-radius: 8px; font-size: 14px; font-family: inherit;
+    transition: border-color 0.2s; background: #fafafa;
+  }
+  .form-row input:focus, .form-row textarea:focus, .form-row select:focus {
+    outline: none; border-color: #1a3a2a; background: white;
+  }
+  .form-row textarea { resize: vertical; min-height: 80px; }
+  .submit-btn {
+    background: #1a3a2a; color: white; border: none; padding: 11px 24px;
+    border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 600;
+    transition: background 0.2s;
+  }
+  .submit-btn:hover { background: #2a5a3a; }
+  .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+  /* 목록 */
+  .list-card {
+    background: white; border-radius: 12px; padding: 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .list-card h2 { font-size: 16px; color: #333; margin-bottom: 16px; font-weight: 600; }
+  .item {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 14px 0; border-bottom: 1px solid #f0f0f0; gap: 12px;
+  }
+  .item:last-child { border-bottom: none; }
+  .item-content { flex: 1; min-width: 0; }
+  .item-title { font-size: 14px; font-weight: 600; color: #222; margin-bottom: 4px; word-break: break-all; }
+  .item-body { font-size: 13px; color: #555; line-height: 1.5; white-space: pre-wrap; word-break: break-all; }
+  .item-meta { font-size: 11px; color: #aaa; margin-top: 4px; }
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 11px; font-weight: 600; margin-right: 6px;
+  }
+  .badge-notice { background: #fff3cd; color: #856404; }
+  .badge-schedule { background: #d1ecf1; color: #0c5460; }
+  .badge-task { background: #d4edda; color: #155724; }
+  .badge-file { background: #e2d9f3; color: #4a235a; }
+  .item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .del-btn {
+    background: #fff0f0; color: #e53e3e; border: none; padding: 5px 10px;
+    border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;
+    transition: background 0.2s;
+  }
+  .del-btn:hover { background: #fed7d7; }
+  .pin-btn {
+    background: #f0f4ff; color: #3b5bdb; border: none; padding: 5px 10px;
+    border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;
+  }
+  .pin-btn.pinned { background: #3b5bdb; color: white; }
+  .empty { text-align: center; color: #bbb; padding: 32px 0; font-size: 14px; }
+
+  /* 섹션 탭 패널 */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+</style>
+</head>
+<body>
+
+<!-- ① 로그인 화면 -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>🔐 BIC 관리자</h1>
+    <p>관리자 비밀번호를 입력하세요</p>
+    <input type="password" id="pw-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">로그인</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- ② 메인 화면 -->
+<div id="main-screen">
+  <div class="header">
+    <h1>🛠 BIC 관리자 — bicgangreung</h1>
+    <div class="header-right">
+      <a href="bic-board.html" target="_blank" class="view-link">→ 직원 화면 보기</a>
+      <button class="logout-btn" onclick="doLogout()">로그아웃</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- 탭 메뉴 -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('notice')">📢 공지사항</button>
+      <button class="tab" onclick="switchTab('schedule')">📅 일정</button>
+      <button class="tab" onclick="switchTab('task')">✅ 업무현황</button>
+      <button class="tab" onclick="switchTab('file')">📎 파일·링크</button>
+    </div>
+
+    <!-- 공지사항 패널 -->
+    <div class="tab-panel active" id="panel-notice">
+      <div class="form-card">
+        <h2>+ 새 공지 작성</h2>
+        <div class="form-row"><label>제목</label><input type="text" id="n-title" placeholder="공지 제목"></div>
+        <div class="form-row"><label>내용</label><textarea id="n-body" placeholder="공지 내용을 입력하세요"></textarea></div>
+        <button class="submit-btn" onclick="addItem('notices')">등록</button>
+      </div>
+      <div class="list-card">
+        <h2>등록된 공지사항</h2>
+        <div id="list-notices"><div class="empty">등록된 공지가 없습니다</div></div>
+      </div>
+    </div>
+
+    <!-- 일정 패널 -->
+    <div class="tab-panel" id="panel-schedule">
+      <div class="form-card">
+        <h2>+ 새 일정 추가</h2>
+        <div class="form-row"><label>날짜</label><input type="date" id="s-date"></div>
+        <div class="form-row"><label>일정 내용</label><input type="text" id="s-title" placeholder="예: 팀 회의, 현장 방문"></div>
+        <div class="form-row"><label>세부 내용 (선택)</label><textarea id="s-body" placeholder="장소, 참석자 등"></textarea></div>
+        <button class="submit-btn" onclick="addItem('schedules')">등록</button>
+      </div>
+      <div class="list-card">
+        <h2>등록된 일정</h2>
+        <div id="list-schedules"><div class="empty">등록된 일정이 없습니다</div></div>
+      </div>
+    </div>
+
+    <!-- 업무현황 패널 -->
+    <div class="tab-panel" id="panel-task">
+      <div class="form-card">
+        <h2>+ 업무 현황 추가</h2>
+        <div class="form-row"><label>업무명</label><input type="text" id="t-title" placeholder="업무 이름"></div>
+        <div class="form-row"><label>담당자</label><input type="text" id="t-person" placeholder="담당자 이름"></div>
+        <div class="form-row">
+          <label>상태</label>
+          <select id="t-status">
+            <option value="진행 중">진행 중</option>
+            <option value="완료">완료</option>
+            <option value="대기">대기</option>
+            <option value="보류">보류</option>
+          </select>
+        </div>
+        <div class="form-row"><label>세부 내용</label><textarea id="t-body" placeholder="업무 내용, 진행 상황 등"></textarea></div>
+        <button class="submit-btn" onclick="addItem('tasks')">등록</button>
+      </div>
+      <div class="list-card">
+        <h2>업무 현황</h2>
+        <div id="list-tasks"><div class="empty">등록된 업무가 없습니다</div></div>
+      </div>
+    </div>
+
+    <!-- 파일·링크 패널 -->
+    <div class="tab-panel" id="panel-file">
+      <div class="form-card">
+        <h2>+ 파일·링크 공유</h2>
+        <div class="form-row"><label>제목</label><input type="text" id="f-title" placeholder="파일 또는 링크 이름"></div>
+        <div class="form-row"><label>링크 URL</label><input type="url" id="f-url" placeholder="https://..."></div>
+        <div class="form-row"><label>설명 (선택)</label><textarea id="f-body" placeholder="파일 내용 설명"></textarea></div>
+        <button class="submit-btn" onclick="addItem('files')">등록</button>
+      </div>
+      <div class="list-card">
+        <h2>공유된 파일·링크</h2>
+        <div id="list-files"><div class="empty">공유된 파일이 없습니다</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// ▼▼▼ Firebase 설정 — Firebase 콘솔에서 복사해서 붙여넣기 ▼▼▼
+// ============================================================
+const firebaseConfig = {
+  apiKey: "여기에_apiKey_붙여넣기",
+  authDomain: "여기에_authDomain_붙여넣기",
+  projectId: "bic-gangreung",
+  storageBucket: "여기에_storageBucket_붙여넣기",
+  messagingSenderId: "여기에_messagingSenderId_붙여넣기",
+  appId: "여기에_appId_붙여넣기"
+};
+// ============================================================
+// ▲▲▲ 위 6줄만 교체하면 됩니다 ▲▲▲
+// ============================================================
+
+// 관리자 비밀번호 (원하는 것으로 바꾸세요)
+const ADMIN_PASSWORD = "bic2024!";
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// 로그인
+function doLogin() {
+  const pw = document.getElementById('pw-input').value;
+  if (pw === ADMIN_PASSWORD) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('main-screen').style.display = 'block';
+    startListeners();
+  } else {
+    document.getElementById('login-error').textContent = '비밀번호가 맞지 않습니다';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+  }
+}
+function doLogout() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('main-screen').style.display = 'none';
+  document.getElementById('pw-input').value = '';
+}
+
+// 탭 전환
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', ['notice','schedule','task','file'][i] === name);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+}
+
+// 데이터 추가
+async function addItem(col) {
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = '등록 중...';
+  try {
+    let data = { createdAt: firebase.firestore.FieldValue.serverTimestamp(), pinned: false };
+    if (col === 'notices') {
+      data.title = document.getElementById('n-title').value.trim();
+      data.body  = document.getElementById('n-body').value.trim();
+      if (!data.title) { alert('제목을 입력하세요'); return; }
+      document.getElementById('n-title').value = '';
+      document.getElementById('n-body').value = '';
+    } else if (col === 'schedules') {
+      data.date  = document.getElementById('s-date').value;
+      data.title = document.getElementById('s-title').value.trim();
+      data.body  = document.getElementById('s-body').value.trim();
+      if (!data.title) { alert('일정 내용을 입력하세요'); return; }
+      document.getElementById('s-date').value = '';
+      document.getElementById('s-title').value = '';
+      document.getElementById('s-body').value = '';
+    } else if (col === 'tasks') {
+      data.title  = document.getElementById('t-title').value.trim();
+      data.person = document.getElementById('t-person').value.trim();
+      data.status = document.getElementById('t-status').value;
+      data.body   = document.getElementById('t-body').value.trim();
+      if (!data.title) { alert('업무명을 입력하세요'); return; }
+      document.getElementById('t-title').value = '';
+      document.getElementById('t-person').value = '';
+      document.getElementById('t-body').value = '';
+    } else if (col === 'files') {
+      data.title = document.getElementById('f-title').value.trim();
+      data.url   = document.getElementById('f-url').value.trim();
+      data.body  = document.getElementById('f-body').value.trim();
+      if (!data.title) { alert('제목을 입력하세요'); return; }
+      document.getElementById('f-title').value = '';
+      document.getElementById('f-url').value = '';
+      document.getElementById('f-body').value = '';
+    }
+    await db.collection(col).add(data);
+  } catch(e) { alert('오류: '+e.message); }
+  finally { btn.disabled = false; btn.textContent = '등록'; }
+}
+
+// 삭제
+async function deleteItem(col, id) {
+  if (!confirm('삭제하시겠습니까?')) return;
+  await db.collection(col).doc(id).delete();
+}
+
+// 고정
+async function togglePin(col, id, current) {
+  await db.collection(col).doc(id).update({ pinned: !current });
+}
+
+// 실시간 리스너
+function startListeners() {
+  const cols = ['notices','schedules','tasks','files'];
+  cols.forEach(col => {
+    db.collection(col).orderBy('createdAt','desc').onSnapshot(snap => {
+      const el = document.getElementById('list-'+col);
+      if (snap.empty) { el.innerHTML = '<div class="empty">등록된 항목이 없습니다</div>'; return; }
+      el.innerHTML = '';
+      snap.forEach(doc => {
+        const d = doc.data();
+        const div = document.createElement('div');
+        div.className = 'item';
+        let meta = d.createdAt ? new Date(d.createdAt.toDate()).toLocaleString('ko-KR') : '';
+        let extra = '';
+        if (col==='schedules' && d.date) extra = `<span class="badge badge-schedule">📅 ${d.date}</span>`;
+        if (col==='tasks') {
+          const sc = {진행중:'badge-task',완료:'badge-schedule',대기:'badge-notice',보류:'badge-file'};
+          extra = `<span class="badge badge-task">${d.status||''}</span>`;
+          if (d.person) extra += `<span class="badge badge-notice">👤 ${d.person}</span>`;
+        }
+        if (col==='files' && d.url) extra = `<a href="${d.url}" target="_blank" style="font-size:12px;color:#3b5bdb;">🔗 링크 열기</a>`;
+        div.innerHTML = `
+          <div class="item-content">
+            ${d.pinned ? '<span class="badge badge-notice">📌 고정</span>' : ''}
+            ${extra}
+            <div class="item-title">${d.title||''}</div>
+            ${d.body ? `<div class="item-body">${d.body}</div>` : ''}
+            <div class="item-meta">${meta}</div>
+          </div>
+          <div class="item-actions">
+            <button class="pin-btn ${d.pinned?'pinned':''}" onclick="togglePin('${col}','${doc.id}',${d.pinned})">
+              ${d.pinned?'고정해제':'고정'}
+            </button>
+            <button class="del-btn" onclick="deleteItem('${col}','${doc.id}')">삭제</button>
+          </div>`;
+        el.appendChild(div);
+      });
+    });
+  });
+}
+</script>
+</body>
+</html>

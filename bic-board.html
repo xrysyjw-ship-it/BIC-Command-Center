@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIC 공유 게시판</title>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; min-height: 100vh; }
+
+  .header {
+    background: #1a3a2a; color: white; padding: 0 24px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-inner {
+    max-width: 960px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 56px;
+  }
+  .header h1 { font-size: 17px; font-weight: 700; }
+  .live-dot {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: #a0d4b0;
+  }
+  .dot {
+    width: 7px; height: 7px; border-radius: 50%; background: #4caf50;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+
+  .content { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
+
+  /* 그리드 */
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media(max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: white; border-radius: 14px; overflow: hidden;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+  }
+  .card-header {
+    padding: 16px 20px; display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .card-header .icon { font-size: 20px; }
+  .card-header h2 { font-size: 15px; font-weight: 700; color: #222; }
+  .card-header .count {
+    margin-left: auto; background: #f0f4ff; color: #3b5bdb;
+    font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px;
+  }
+  .card-body { padding: 0 20px 16px; }
+
+  .item {
+    padding: 14px 0; border-bottom: 1px solid #f5f5f5;
+  }
+  .item:last-child { border-bottom: none; }
+
+  .item-title { font-size: 14px; font-weight: 600; color: #222; margin-bottom: 4px; }
+  .item-body { font-size: 13px; color: #555; line-height: 1.6; white-space: pre-wrap; margin-bottom: 4px; }
+  .item-meta { font-size: 11px; color: #bbb; }
+
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 11px; font-weight: 600; margin-right: 4px; margin-bottom: 4px;
+  }
+  .badge-green  { background: #d4edda; color: #155724; }
+  .badge-blue   { background: #d1ecf1; color: #0c5460; }
+  .badge-yellow { background: #fff3cd; color: #856404; }
+  .badge-purple { background: #e2d9f3; color: #4a235a; }
+  .badge-red    { background: #f8d7da; color: #721c24; }
+  .badge-pin    { background: #1a3a2a; color: white; }
+
+  .pinned { border-left: 3px solid #1a3a2a; padding-left: 12px; }
+
+  .link-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #f0f4ff; color: #3b5bdb; border: none;
+    padding: 6px 12px; border-radius: 6px; font-size: 12px;
+    font-weight: 600; cursor: pointer; text-decoration: none;
+    transition: background 0.2s; margin-top: 6px;
+  }
+  .link-btn:hover { background: #dde3f5; }
+
+  .empty { text-align: center; color: #ccc; padding: 32px 0; font-size: 14px; }
+
+  .updated-at {
+    text-align: center; font-size: 11px; color: #bbb; margin-top: 24px; padding-bottom: 16px;
+  }
+
+  /* 상단 요약 바 */
+  .summary {
+    display: grid; grid-template-columns: repeat(4,1fr); gap: 12px;
+    margin-bottom: 20px;
+  }
+  @media(max-width:480px){ .summary{ grid-template-columns: repeat(2,1fr); } }
+  .summary-item {
+    background: white; border-radius: 10px; padding: 14px 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07); text-align: center;
+  }
+  .summary-num { font-size: 24px; font-weight: 700; color: #1a3a2a; }
+  .summary-label { font-size: 11px; color: #888; margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <h1>📋 BIC 공유 게시판</h1>
+    <div class="live-dot"><div class="dot"></div> 실시간 연결</div>
+  </div>
+</div>
+
+<div class="content">
+  <!-- 요약 바 -->
+  <div class="summary">
+    <div class="summary-item">
+      <div class="summary-num" id="cnt-notice">-</div>
+      <div class="summary-label">📢 공지사항</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-num" id="cnt-schedule">-</div>
+      <div class="summary-label">📅 일정</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-num" id="cnt-task">-</div>
+      <div class="summary-label">✅ 업무현황</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-num" id="cnt-file">-</div>
+      <div class="summary-label">📎 파일·링크</div>
+    </div>
+  </div>
+
+  <!-- 본문 그리드 -->
+  <div class="grid">
+    <!-- 공지사항 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">📢</span>
+        <h2>공지사항</h2>
+        <span class="count" id="badge-notice">0</span>
+      </div>
+      <div class="card-body">
+        <div id="list-notices"><div class="empty">공지사항이 없습니다</div></div>
+      </div>
+    </div>
+
+    <!-- 일정 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">📅</span>
+        <h2>일정</h2>
+        <span class="count" id="badge-schedule">0</span>
+      </div>
+      <div class="card-body">
+        <div id="list-schedules"><div class="empty">등록된 일정이 없습니다</div></div>
+      </div>
+    </div>
+
+    <!-- 업무현황 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">✅</span>
+        <h2>업무 현황</h2>
+        <span class="count" id="badge-task">0</span>
+      </div>
+      <div class="card-body">
+        <div id="list-tasks"><div class="empty">등록된 업무가 없습니다</div></div>
+      </div>
+    </div>
+
+    <!-- 파일·링크 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">📎</span>
+        <h2>파일·링크</h2>
+        <span class="count" id="badge-file">0</span>
+      </div>
+      <div class="card-body">
+        <div id="list-files"><div class="empty">공유된 파일이 없습니다</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="updated-at" id="updated-at"></div>
+</div>
+
+<script>
+// ============================================================
+// ▼▼▼ Firebase 설정 — bic-admin.html과 동일하게 붙여넣기 ▼▼▼
+// ============================================================
+const firebaseConfig = {
+  apiKey: "여기에_apiKey_붙여넣기",
+  authDomain: "여기에_authDomain_붙여넣기",
+  projectId: "bic-gangreung",
+  storageBucket: "여기에_storageBucket_붙여넣기",
+  messagingSenderId: "여기에_messagingSenderId_붙여넣기",
+  appId: "여기에_appId_붙여넣기"
+};
+// ============================================================
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+function timeAgo(date) {
+  const diff = (Date.now() - date.getTime()) / 1000;
+  if (diff < 60) return '방금 전';
+  if (diff < 3600) return Math.floor(diff/60)+'분 전';
+  if (diff < 86400) return Math.floor(diff/3600)+'시간 전';
+  return date.toLocaleDateString('ko-KR');
+}
+
+// 공지사항
+db.collection('notices').orderBy('createdAt','desc').onSnapshot(snap => {
+  document.getElementById('cnt-notice').textContent = snap.size;
+  document.getElementById('badge-notice').textContent = snap.size;
+  const el = document.getElementById('list-notices');
+  if (snap.empty) { el.innerHTML = '<div class="empty">공지사항이 없습니다</div>'; return; }
+  el.innerHTML = '';
+  // 고정 먼저 정렬
+  const docs = [];
+  snap.forEach(d => docs.push({id:d.id,...d.data()}));
+  docs.sort((a,b) => (b.pinned?1:0)-(a.pinned?1:0));
+  docs.forEach(d => {
+    const div = document.createElement('div');
+    div.className = 'item' + (d.pinned?' pinned':'');
+    const meta = d.createdAt ? timeAgo(d.createdAt.toDate()) : '';
+    div.innerHTML = `
+      ${d.pinned ? '<span class="badge badge-pin">📌 고정</span>' : ''}
+      <div class="item-title">${d.title||''}</div>
+      ${d.body ? `<div class="item-body">${d.body}</div>` : ''}
+      <div class="item-meta">${meta}</div>`;
+    el.appendChild(div);
+  });
+  updateTime();
+});
+
+// 일정
+db.collection('schedules').orderBy('date','asc').onSnapshot(snap => {
+  document.getElementById('cnt-schedule').textContent = snap.size;
+  document.getElementById('badge-schedule').textContent = snap.size;
+  const el = document.getElementById('list-schedules');
+  if (snap.empty) { el.innerHTML = '<div class="empty">등록된 일정이 없습니다</div>'; return; }
+  el.innerHTML = '';
+  snap.forEach(doc => {
+    const d = doc.data();
+    const div = document.createElement('div');
+    div.className = 'item';
+    div.innerHTML = `
+      ${d.date ? `<span class="badge badge-blue">📅 ${d.date}</span>` : ''}
+      <div class="item-title">${d.title||''}</div>
+      ${d.body ? `<div class="item-body">${d.body}</div>` : ''}`;
+    el.appendChild(div);
+  });
+  updateTime();
+});
+
+// 업무현황
+db.collection('tasks').orderBy('createdAt','desc').onSnapshot(snap => {
+  document.getElementById('cnt-task').textContent = snap.size;
+  document.getElementById('badge-task').textContent = snap.size;
+  const el = document.getElementById('list-tasks');
+  if (snap.empty) { el.innerHTML = '<div class="empty">등록된 업무가 없습니다</div>'; return; }
+  el.innerHTML = '';
+  snap.forEach(doc => {
+    const d = doc.data();
+    const div = document.createElement('div');
+    div.className = 'item';
+    const statusColor = {
+      '진행 중':'badge-green','완료':'badge-blue',
+      '대기':'badge-yellow','보류':'badge-red'
+    }[d.status] || 'badge-yellow';
+    div.innerHTML = `
+      <span class="badge ${statusColor}">${d.status||''}</span>
+      ${d.person ? `<span class="badge badge-purple">👤 ${d.person}</span>` : ''}
+      <div class="item-title">${d.title||''}</div>
+      ${d.body ? `<div class="item-body">${d.body}</div>` : ''}`;
+    el.appendChild(div);
+  });
+  updateTime();
+});
+
+// 파일·링크
+db.collection('files').orderBy('createdAt','desc').onSnapshot(snap => {
+  document.getElementById('cnt-file').textContent = snap.size;
+  document.getElementById('badge-file').textContent = snap.size;
+  const el = document.getElementById('list-files');
+  if (snap.empty) { el.innerHTML = '<div class="empty">공유된 파일이 없습니다</div>'; return; }
+  el.innerHTML = '';
+  snap.forEach(doc => {
+    const d = doc.data();
+    const div = document.createElement('div');
+    div.className = 'item';
+    div.innerHTML = `
+      <div class="item-title">${d.title||''}</div>
+      ${d.body ? `<div class="item-body">${d.body}</div>` : ''}
+      ${d.url ? `<a href="${d.url}" target="_blank" class="link-btn">🔗 열기</a>` : ''}`;
+    el.appendChild(div);
+  });
+  updateTime();
+});
+
+function updateTime() {
+  document.getElementById('updated-at').textContent =
+    '마지막 업데이트: ' + new Date().toLocaleTimeString('ko-KR');
+}
+</script>
+</body>
+</html>
