@@ -260,6 +260,8 @@ body.admin-mode .sc-drive .drive-save-btn{display:inline-flex!important}
 .draw-link-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--bdc);border-radius:8px;padding:9px 12px;margin-bottom:8px;box-shadow:var(--sh)}
 .draw-link-input{display:none!important}
 body.admin-mode .draw-link-input{display:inline-block!important}
+#draw-extra-row input, #draw-extra-row button{display:inline-block!important}
+body.admin-mode #draw-extra-row input, body.admin-mode #draw-extra-row button{display:inline-flex!important}
 .draw-link-label{font-size:12px;font-weight:700;color:var(--tx);min-width:140px;flex-shrink:0}
 .draw-link-input{flex:1;min-width:150px;border:1px solid #c8d8f5;border-radius:5px;padding:6px 9px;font-size:11px;background:var(--bg);font-family:'KoPub돋움체 Bold','KoPubDotum Bold','Malgun Gothic',sans-serif!important}
 .draw-link-input:focus{outline:none;border-color:var(--bl)}
@@ -276,7 +278,7 @@ body.admin-mode .draw-link-input{display:inline-block!important}
 .memo-type-tabs{display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap}
 .mtt{font-size:10px;font-weight:700;padding:4px 10px;border-radius:5px;cursor:pointer;border:1px solid var(--bdc);background:var(--bg2);color:#444}
 .mtt.on{background:var(--gr);color:#fff;border-color:var(--gr)}
-.memo-type-panel{display:none}.memo-type-panel.on{display:block}
+.memo-type-panel{display:none}.aep.on{display:block}
 .memo-link-input{width:100%;border:1px solid #c8d8f5;border-radius:6px;padding:7px 10px;font-size:12px;background:var(--bg2);margin-bottom:7px;font-family:'KoPub돋움체 Bold','KoPubDotum Bold','Malgun Gothic',sans-serif!important}
 .memo-link-input:focus{outline:none;border-color:var(--bl)}
 .memo-file-drop{border:2px dashed var(--bdc);border-radius:7px;padding:14px;text-align:center;color:var(--mu);font-size:11px;cursor:pointer;background:var(--bg2);margin-bottom:7px}
@@ -711,25 +713,24 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="mtt" data-mp="visit">📍 방문·미팅</div>
     <div class="mtt" data-mp="link">🔗 링크</div>
     <div class="mtt" data-mp="photo">📸 사진</div>
-    <div class="mtt" data-mp="file">📎 파일</div>
   </div>
-  <div class="memo-type-panel on" data-mp="text">
+  <div class="aep on" data-mp="text">
     <textarea class="ae-mt" placeholder="메모 내용..."></textarea>
   </div>
-  <div class="memo-type-panel" data-mp="visit">
+  <div class="aep" data-mp="visit">
       <textarea class="ae-vt" placeholder="방문·미팅 내용..."></textarea>
       <input type="text" class="ae-vw mf-input" placeholder="참석자 (선택)">
     </div>
-  <div class="memo-type-panel" data-mp="link">
+  <div class="aep" data-mp="link">
     <input class="memo-link-input mli mf-input" type="url" placeholder="링크 붙여넣기 (Drive · 홈페이지 · 파일 URL 등)">
   </div>
-  <div class="memo-type-panel" data-mp="photo">
+  <div class="aep" data-mp="photo">
     <input type="file" class="ae-pi" accept="image/*" multiple>
     <div class="pdrop">📸 클릭하여 사진 선택</div>
     <div class="ae-prev"></div>
     <input type="text" class="ae-pd mf-input" placeholder="사진 설명 (선택)">
   </div>
-  <div class="memo-type-panel" data-mp="file">
+  <div class="aep" data-mp="file">
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <input type="text" class="ae-fn mf-input" placeholder="파일명" style="flex:1;min-width:120px">
       <select class="ae-fx"><option>PDF</option><option>DWG</option><option>DOCX</option><option>XLSX</option><option>JPG</option><option>HWP</option><option>기타</option></select>
@@ -754,18 +755,18 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="mtt" data-mp="photo">📸 사진</div>
     <div class="mtt" data-mp="file">📎 파일</div>
   </div>
-  <div class="memo-type-panel on" data-mp="text">
+  <div class="aep on" data-mp="text">
     <textarea class="ae-mt" placeholder="메모 내용..."></textarea>
   </div>
-  <div class="memo-type-panel" data-mp="link">
+  <div class="aep" data-mp="link">
     <input class="memo-link-input mli" type="url" placeholder="링크 붙여넣기 (Drive · 홈페이지 · 파일 URL 등)">
   </div>
-  <div class="memo-type-panel" data-mp="photo">
+  <div class="aep" data-mp="photo">
     <input type="file" class="ae-pi" accept="image/*" multiple>
     <div class="pdrop">📸 클릭하여 사진 선택</div>
     <div class="ae-prev"></div>
   </div>
-  <div class="memo-type-panel" data-mp="file">
+  <div class="aep" data-mp="file">
     <div class="ae-row">
       <input type="text" class="ae-fn" placeholder="파일명">
       <select class="ae-fx"><option>PDF</option><option>DWG</option><option>DOCX</option><option>XLSX</option><option>JPG</option><option>기타</option></select>
@@ -829,20 +830,20 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="mtt" data-mp="photo">📸 사진</div>
     <div class="mtt" data-mp="file">📎 파일</div>
   </div>
-  <div class="memo-type-panel on" data-mp="text">
+  <div class="aep on" data-mp="text">
     <textarea class="ae-mt" placeholder="메모 내용..."></textarea>
   </div>
   
-  <div class="memo-type-panel" data-mp="link">
+  <div class="aep" data-mp="link">
     <input class="memo-link-input mli mf-input" type="url" placeholder="링크 붙여넣기 (Drive · 홈페이지 · 파일 URL 등)">
   </div>
-  <div class="memo-type-panel" data-mp="photo">
+  <div class="aep" data-mp="photo">
     <input type="file" class="ae-pi" accept="image/*" multiple>
     <div class="pdrop">📸 클릭하여 사진 선택</div>
     <div class="ae-prev"></div>
     <input type="text" class="ae-pd mf-input" placeholder="사진 설명 (선택)">
   </div>
-  <div class="memo-type-panel" data-mp="file">
+  <div class="aep" data-mp="file">
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <input type="text" class="ae-fn mf-input" placeholder="파일명" style="flex:1;min-width:120px">
       <select class="ae-fx"><option>PDF</option><option>DWG</option><option>DOCX</option><option>XLSX</option><option>JPG</option><option>HWP</option><option>기타</option></select>
@@ -879,23 +880,23 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="mtt" data-mp="photo">📸 사진</div>
     <div class="mtt" data-mp="file">📎 파일</div>
   </div>
-  <div class="memo-type-panel on" data-mp="text">
+  <div class="aep on" data-mp="text">
     <textarea class="ae-mt" placeholder="메모 내용..."></textarea>
   </div>
-  <div class="memo-type-panel" data-mp="visit">
+  <div class="aep" data-mp="visit">
       <textarea class="ae-vt" placeholder="방문·미팅 내용..."></textarea>
       <input type="text" class="ae-vw mf-input" placeholder="참석자 (선택)">
     </div>
-  <div class="memo-type-panel" data-mp="link">
+  <div class="aep" data-mp="link">
     <input class="memo-link-input mli mf-input" type="url" placeholder="링크 붙여넣기 (Drive · 홈페이지 · 파일 URL 등)">
   </div>
-  <div class="memo-type-panel" data-mp="photo">
+  <div class="aep" data-mp="photo">
     <input type="file" class="ae-pi" accept="image/*" multiple>
     <div class="pdrop">📸 클릭하여 사진 선택</div>
     <div class="ae-prev"></div>
     <input type="text" class="ae-pd mf-input" placeholder="사진 설명 (선택)">
   </div>
-  <div class="memo-type-panel" data-mp="file">
+  <div class="aep" data-mp="file">
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <input type="text" class="ae-fn mf-input" placeholder="파일명" style="flex:1;min-width:120px">
       <select class="ae-fx"><option>PDF</option><option>DWG</option><option>DOCX</option><option>XLSX</option><option>JPG</option><option>HWP</option><option>기타</option></select>
@@ -916,23 +917,23 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="mtt" data-mp="photo">📸 사진</div>
     <div class="mtt" data-mp="file">📎 파일</div>
   </div>
-  <div class="memo-type-panel on" data-mp="text">
+  <div class="aep on" data-mp="text">
     <textarea class="ae-mt" placeholder="메모 내용..."></textarea>
   </div>
-  <div class="memo-type-panel" data-mp="visit">
+  <div class="aep" data-mp="visit">
       <textarea class="ae-vt" placeholder="방문·미팅 내용..."></textarea>
       <input type="text" class="ae-vw mf-input" placeholder="참석자 (선택)">
     </div>
-  <div class="memo-type-panel" data-mp="link">
+  <div class="aep" data-mp="link">
     <input class="memo-link-input mli mf-input" type="url" placeholder="링크 붙여넣기 (Drive · 홈페이지 · 파일 URL 등)">
   </div>
-  <div class="memo-type-panel" data-mp="photo">
+  <div class="aep" data-mp="photo">
     <input type="file" class="ae-pi" accept="image/*" multiple>
     <div class="pdrop">📸 클릭하여 사진 선택</div>
     <div class="ae-prev"></div>
     <input type="text" class="ae-pd mf-input" placeholder="사진 설명 (선택)">
   </div>
-  <div class="memo-type-panel" data-mp="file">
+  <div class="aep" data-mp="file">
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <input type="text" class="ae-fn mf-input" placeholder="파일명" style="flex:1;min-width:120px">
       <select class="ae-fx"><option>PDF</option><option>DWG</option><option>DOCX</option><option>XLSX</option><option>JPG</option><option>HWP</option><option>기타</option></select>
@@ -953,23 +954,23 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="mtt" data-mp="photo">📸 사진</div>
     <div class="mtt" data-mp="file">📎 파일</div>
   </div>
-  <div class="memo-type-panel on" data-mp="text">
+  <div class="aep on" data-mp="text">
     <textarea class="ae-mt" placeholder="메모 내용..."></textarea>
   </div>
-  <div class="memo-type-panel" data-mp="visit">
+  <div class="aep" data-mp="visit">
       <textarea class="ae-vt" placeholder="방문·미팅 내용..."></textarea>
       <input type="text" class="ae-vw mf-input" placeholder="참석자 (선택)">
     </div>
-  <div class="memo-type-panel" data-mp="link">
+  <div class="aep" data-mp="link">
     <input class="memo-link-input mli mf-input" type="url" placeholder="링크 붙여넣기 (Drive · 홈페이지 · 파일 URL 등)">
   </div>
-  <div class="memo-type-panel" data-mp="photo">
+  <div class="aep" data-mp="photo">
     <input type="file" class="ae-pi" accept="image/*" multiple>
     <div class="pdrop">📸 클릭하여 사진 선택</div>
     <div class="ae-prev"></div>
     <input type="text" class="ae-pd mf-input" placeholder="사진 설명 (선택)">
   </div>
-  <div class="memo-type-panel" data-mp="file">
+  <div class="aep" data-mp="file">
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <input type="text" class="ae-fn mf-input" placeholder="파일명" style="flex:1;min-width:120px">
       <select class="ae-fx"><option>PDF</option><option>DWG</option><option>DOCX</option><option>XLSX</option><option>JPG</option><option>HWP</option><option>기타</option></select>
@@ -1033,23 +1034,23 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="mtt" data-mp="photo">📸 사진</div>
     <div class="mtt" data-mp="file">📎 파일</div>
   </div>
-  <div class="memo-type-panel on" data-mp="text">
+  <div class="aep on" data-mp="text">
     <textarea class="ae-mt" placeholder="메모 내용..."></textarea>
   </div>
-  <div class="memo-type-panel" data-mp="visit">
+  <div class="aep" data-mp="visit">
       <textarea class="ae-vt" placeholder="방문·미팅 내용..."></textarea>
       <input type="text" class="ae-vw mf-input" placeholder="참석자 (선택)">
     </div>
-  <div class="memo-type-panel" data-mp="link">
+  <div class="aep" data-mp="link">
     <input class="memo-link-input mli mf-input" type="url" placeholder="링크 붙여넣기 (Drive · 홈페이지 · 파일 URL 등)">
   </div>
-  <div class="memo-type-panel" data-mp="photo">
+  <div class="aep" data-mp="photo">
     <input type="file" class="ae-pi" accept="image/*" multiple>
     <div class="pdrop">📸 클릭하여 사진 선택</div>
     <div class="ae-prev"></div>
     <input type="text" class="ae-pd mf-input" placeholder="사진 설명 (선택)">
   </div>
-  <div class="memo-type-panel" data-mp="file">
+  <div class="aep" data-mp="file">
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <input type="text" class="ae-fn mf-input" placeholder="파일명" style="flex:1;min-width:120px">
       <select class="ae-fx"><option>PDF</option><option>DWG</option><option>DOCX</option><option>XLSX</option><option>JPG</option><option>HWP</option><option>기타</option></select>
@@ -2031,6 +2032,15 @@ function addDrawRow() {
   list.insertBefore(row, extraRow);
   document.getElementById('draw-extra-label').value = '';
   document.getElementById('draw-extra-url').value = '';
+
+  // Firestore 저장
+  if (typeof db !== 'undefined' && url && url.startsWith('http')) {
+    var key = 'draw:' + label;
+    db.collection('links').doc(encodeURIComponent(key)).set({
+      key: key, url: url,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(function(e){ console.warn('도면 링크 저장 오류:', e); });
+  }
 }
 
 // ── 메모폼 탭 전환 ─────────────────────────────────────────────
@@ -2041,7 +2051,7 @@ document.addEventListener('click', function(e) {
     form.querySelectorAll('.memo-type-panel, .aep').forEach(function(p){p.classList.remove('on');});
     e.target.classList.add('on');
     var panel = form.querySelector('.aep[data-mp="'+e.target.getAttribute('data-mp')+'"]')
-             || form.querySelector('.memo-type-panel[data-mp="'+e.target.getAttribute('data-mp')+'"]');
+             || form.querySelector('.aep[data-mp="'+e.target.getAttribute('data-mp')+'"]');
     if (panel) panel.classList.add('on');
     return;
   }
@@ -2054,7 +2064,7 @@ function addMemoEntry(btn) {
   var ll_id  = form.getAttribute('data-ll');
   var titleEl= form.querySelector('.memo-title');
   var title  = titleEl ? titleEl.value.trim() : '';
-  var activePanel = form.querySelector('.aep.on') || form.querySelector('.memo-type-panel.on');
+  var activePanel = form.querySelector('.aep.on') || form.querySelector('.aep.on');
   var mp     = activePanel ? activePanel.getAttribute('data-mp') : 'text';
   var dateEl = form.querySelector('.ae-d');
   var dateStr= dateEl ? fmtD(dateEl.value) : fmtD('');
@@ -2710,7 +2720,7 @@ window.addEventListener('DOMContentLoaded', function() {
     var sc = btn.closest('.sc');
     var ll_id = form ? form.getAttribute('data-ll') : null;
     var scId = sc ? (sc.getAttribute('data-s') || sc.id || '') : '';
-    var activePanel = form ? form.querySelector('.memo-type-panel.on') : null;
+    var activePanel = form ? form.querySelector('.aep.on') : null;
     var mp = activePanel ? activePanel.getAttribute('data-mp') : 'text';
     var dateEl = form ? form.querySelector('.ae-d') : null;
     var dateStr = dateEl ? fmtD(dateEl.value) : fmtD('');
