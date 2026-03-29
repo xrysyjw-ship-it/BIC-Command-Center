@@ -2038,9 +2038,10 @@ document.addEventListener('click', function(e) {
   if (e.target.classList.contains('mtt')) {
     var form = e.target.closest('.memo-form');
     form.querySelectorAll('.mtt').forEach(function(t){t.classList.remove('on');});
-    form.querySelectorAll('.memo-type-panel').forEach(function(p){p.classList.remove('on');});
+    form.querySelectorAll('.memo-type-panel, .aep').forEach(function(p){p.classList.remove('on');});
     e.target.classList.add('on');
-    var panel = form.querySelector('.memo-type-panel[data-mp="'+e.target.getAttribute('data-mp')+'"]');
+    var panel = form.querySelector('.aep[data-mp="'+e.target.getAttribute('data-mp')+'"]')
+             || form.querySelector('.memo-type-panel[data-mp="'+e.target.getAttribute('data-mp')+'"]');
     if (panel) panel.classList.add('on');
     return;
   }
@@ -2053,7 +2054,7 @@ function addMemoEntry(btn) {
   var ll_id  = form.getAttribute('data-ll');
   var titleEl= form.querySelector('.memo-title');
   var title  = titleEl ? titleEl.value.trim() : '';
-  var activePanel = form.querySelector('.memo-type-panel.on');
+  var activePanel = form.querySelector('.aep.on') || form.querySelector('.memo-type-panel.on');
   var mp     = activePanel ? activePanel.getAttribute('data-mp') : 'text';
   var dateEl = form.querySelector('.ae-d');
   var dateStr= dateEl ? fmtD(dateEl.value) : fmtD('');
