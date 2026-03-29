@@ -2121,6 +2121,19 @@ function addMemoEntry(btn) {
   }
   if (titleEl) titleEl.value = '';
   if (dateEl) dateEl.value = '';
+
+  // Firestore 저장
+  if (typeof db !== 'undefined') {
+    db.collection('entries').add({
+      ll_id: ll_id || '',
+      scId: sc ? sc.getAttribute('data-s') : '',
+      mp: mp,
+      title: title || '',
+      content: content || '',
+      dateStr: dateStr || '',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(function(e){ console.warn('저장 오류:', e.message); });
+  }
 }
 
 
